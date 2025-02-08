@@ -1,14 +1,14 @@
 package com.SpringSecurity.SecurityAppLearning.SecurityAppLearning.Service.Impl;
 
 
-import com.SpringSecurity.SecurityAppLearning.SecurityAppLearning.Config.WebSecurityConfig;
 import com.SpringSecurity.SecurityAppLearning.SecurityAppLearning.Dto.LoginDTO;
 import com.SpringSecurity.SecurityAppLearning.SecurityAppLearning.Dto.LoginResponseDTO;
 import com.SpringSecurity.SecurityAppLearning.SecurityAppLearning.Dto.SignUpDTO;
 import com.SpringSecurity.SecurityAppLearning.SecurityAppLearning.Dto.UserDTO;
+import com.SpringSecurity.SecurityAppLearning.SecurityAppLearning.Entity.SessionEntity;
 import com.SpringSecurity.SecurityAppLearning.SecurityAppLearning.Entity.UserEntity;
 import com.SpringSecurity.SecurityAppLearning.SecurityAppLearning.Exceptions.ResourceConflictException;
-import com.SpringSecurity.SecurityAppLearning.SecurityAppLearning.Exceptions.ResourceNotFoundException;
+import com.SpringSecurity.SecurityAppLearning.SecurityAppLearning.Repository.SessionRepository;
 import com.SpringSecurity.SecurityAppLearning.SecurityAppLearning.Repository.UserRepository;
 import com.SpringSecurity.SecurityAppLearning.SecurityAppLearning.Service.AuthService;
 import com.SpringSecurity.SecurityAppLearning.SecurityAppLearning.Service.JwtService;
@@ -18,10 +18,10 @@ import org.modelmapper.ModelMapper;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.Optional;
 
 @Service
@@ -34,6 +34,7 @@ public class AuthServiceImpl implements AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final UserService userService;
+    private final SessionRepository sessionRepository;
 
 
     @Override
@@ -65,8 +66,23 @@ public class AuthServiceImpl implements AuthService {
 
 
         UserEntity user = (UserEntity) authentication.getPrincipal();
-        String accessToken = jwtService.generateAcessToken(user);
+        String accessToken = jwtService.generateAccessToken(user);
         String refreshToken = jwtService.generateRefreshToken(user);
+
+        //Check the session repository
+        SessionEntity currentSession = sessionRepository.findById(user.getId()).orElse(null);
+
+
+        if (currentSession != null) {
+            sessionRepository.delete(currentSession);
+        }
+
+        SessionEntity newSession = new SessionEntity();
+        newSession.setUserId(user.getId());
+        newSession.setToken(refreshToken);
+        newSession.setCreatedAt(Instant.now());
+
+        sessionRepository.save(newSession);
 
         return new LoginResponseDTO(user.getId(), accessToken, refreshToken);
     }
@@ -78,7 +94,7 @@ public class AuthServiceImpl implements AuthService {
 
         UserEntity user = (UserEntity) userService.loadUserByUserId(userId);
 
-        String accessToken = jwtService.generateAcessToken(user);
+        String accessToken = jwtService.generateAccessToken(user);
 
         return new LoginResponseDTO(userId,accessToken, refreshToken);
     }

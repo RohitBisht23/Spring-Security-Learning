@@ -25,13 +25,13 @@ public class JwtService {
     }
 
     //1-> Create JWT tokens
-    public String generateAcessToken(UserEntity user) {
+    public String generateAccessToken(UserEntity user) {
         return Jwts.builder()
                 .subject(user.getId().toString())
                 .claim("email", user.getEmail())
                 .claim("roles", Set.of("ADMIN", "USER"))
                 .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis()+1000*60*5)) // five minutes
+                .expiration(new Date(System.currentTimeMillis()+1000*60)) // One minutes
                 .signWith(getSecretKey())
                 .compact();
     }

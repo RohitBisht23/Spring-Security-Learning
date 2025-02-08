@@ -61,6 +61,6 @@ public class LoggerFilter extends OncePerRequestFilter {
 
     private void logResponse(ContentCachingResponseWrapper response) {
         String responseBody = new String(response.getContentAsByteArray(), StandardCharsets.UTF_8);
-        logger.info("Outgoing Response: [{}] Token: {} Body: {}", response.getStatus(), responseBody);
+        logger.info("Outgoing Response: [{}] Token: {}", response.getStatus(), responseBody);
     }
 }

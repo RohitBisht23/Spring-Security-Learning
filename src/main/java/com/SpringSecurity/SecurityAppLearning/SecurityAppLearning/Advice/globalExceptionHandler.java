@@ -30,7 +30,4 @@ public class globalExceptionHandler {
 
         return new ResponseEntity<>(apiError, HttpStatus.UNAUTHORIZED);
     }
-
-
-
 }
